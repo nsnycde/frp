@@ -52,7 +52,7 @@ func (svr *Service) apiReload(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("Http request: [/api/reload]")
 
-	b, err := ioutil.ReadFile(g.GlbClientCfg.CfgFile)
+	b, err := ioutil.ReadFile(g.GlbClientCfg.Key)
 	if err != nil {
 		res.Code = 1
 		res.Msg = err.Error()
@@ -69,7 +69,7 @@ func (svr *Service) apiReload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conf, err := ini.LoadFile(g.GlbClientCfg.CfgFile)
+	conf, err := ini.LoadFile(g.GlbClientCfg.Key)
 	if err != nil {
 		res.Code = 1
 		res.Msg = err.Error()

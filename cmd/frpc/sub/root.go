@@ -16,9 +16,11 @@ package sub
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -27,7 +29,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	ini "github.com/vaughan0/go-ini"
+	"github.com/vaughan0/go-ini"
 
 	"github.com/fatedier/frp/client"
 	"github.com/fatedier/frp/g"
@@ -42,7 +44,7 @@ const (
 )
 
 var (
-	cfgFile     string
+	key         string
 	showVersion bool
 
 	serverAddr string
@@ -73,7 +75,7 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "", "c", "./frpc.ini", "config file of frpc")
+	rootCmd.PersistentFlags().StringVarP(&key, "", "k", "", "frpc key")
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "version of frpc")
 }
 
@@ -87,7 +89,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Do not show command usage here.
-		err := runClient(cfgFile)
+		err := runClient(key)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -121,7 +123,7 @@ func parseClientCommonCfg(fileType int, filePath string) (err error) {
 		return
 	}
 
-	g.GlbClientCfg.CfgFile = cfgFile
+	g.GlbClientCfg.Key = key
 
 	err = g.GlbClientCfg.ClientCommonConf.Check()
 	if err != nil {
@@ -169,15 +171,22 @@ func parseClientCommonCfgFromCmd() (err error) {
 	return nil
 }
 
-func runClient(cfgFilePath string) (err error) {
-	err = parseClientCommonCfg(CfgFileTypeIni, cfgFilePath)
+func runClient(key string) (err error) {
+
+	resp, err := http.Post("http://127.0.0.1:8080/client/init", "application/x-www-form-urlencoded", strings.NewReader("key="+key))
 	if err != nil {
+		fmt.Println(err)
 		return
 	}
+	defer resp.Body.Close()
+	configJson, _ := ioutil.ReadAll(resp.Body)
 
-	conf, err := ini.LoadFile(cfgFilePath)
-	if err != nil {
-		return err
+	conf := make(ini.File)
+	errParse := json.Unmarshal(configJson, &conf)
+	if errParse != nil {
+		fmt.Println(string(configJson))
+		fmt.Println(errParse)
+		return
 	}
 
 	pxyCfgs, visitorCfgs, err := config.LoadProxyConfFromIni(g.GlbClientCfg.User, conf, g.GlbClientCfg.Start)

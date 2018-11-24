@@ -21,7 +21,7 @@ func init() {
 type ClientCfg struct {
 	config.ClientCommonConf
 
-	CfgFile       string
+	Key           string
 	ServerUdpPort int // this is configured by login response from frps
 }
 

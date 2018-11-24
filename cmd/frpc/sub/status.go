@@ -38,7 +38,7 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Overview of all proxies status",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := parseClientCommonCfg(CfgFileTypeIni, cfgFile)
+		err := parseClientCommonCfg(CfgFileTypeIni, key)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
